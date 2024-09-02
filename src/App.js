@@ -1,31 +1,23 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from 'react-redux';
 import MovieCard from "./MovieCard";
 import SearchIcon from "./search.svg";
 import "./App.css";
-
-const API_URL = `http://www.omdbapi.com?apikey=${process.env.REACT_APP_API_KEY}`;
+import { searchMovies } from './actions/movieActions';
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [movies, setMovies] = useState([]);
+  const dispatch = useDispatch();
 
-  const searchMovies = useCallback(async (title) => {
-    try {
-      const response = await fetch(`${API_URL}&s=${title}`);
-      const data = await response.json();
-      setMovies(data.Search || []);
-    } catch (error) {
-      console.error("Error fetching movies:", error);
-    }
-  }, []);
+  const { movies, loading, error } = useSelector((state) => state.movies);
 
   useEffect(() => {
-    searchMovies("Inception");
-  }, [searchMovies]);
+    dispatch(searchMovies("Inception"));
+  }, [dispatch]);
 
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
-  const handleSearchClick = () => searchMovies(searchTerm);
+  const handleSearchClick = () => dispatch(searchMovies(searchTerm));
 
   return (
     <div className="app">
@@ -44,7 +36,11 @@ const App = () => {
         />
       </div>
 
-      {movies.length > 0 ? (
+      {loading ? (
+        <div className="loading">Loading...</div>
+      ) : error ? (
+        <div className="error">{error}</div>
+      ) : movies.length > 0 ? (
         <div className="container">
           {movies.map((movie) => (
             <MovieCard key={movie.imdbID} movie={movie} />
